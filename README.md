@@ -176,8 +176,6 @@ Write Test -> Annotate with @HelmDeploy -> Run tests -> App deployed to K8s -> T
 * **Declarative Java DSL**: Create fluent DSL for inline Helm scenarios without annotations.
 * **Documentation Website**: Launch a clean, searchable site with live demos and usage guides.
 * **v1.0.0 Release**: Package stable features, write release notes, and launch publicly.
-
-![Roadmap](image.png)
 ---
 
 ## 📣 Feedback & Contributions
