@@ -87,17 +87,7 @@ class HelmChartValidationIT {
 ### Lifecycle Diagram
 
 ```
-@BeforeAll/@BeforeEach
-      │
-[ Helm install chart ]
-      │
-[ Wait for pods ready ]
-      │
-[ Run test method(s) ]
-      │
-[ Collect logs on failure ]
-      │
-[ Helm uninstall ]
+![LifecycleDiagram](image-1.png)
 ```
 
 ### System Architecture
@@ -188,6 +178,7 @@ Write Test -> Annotate with @HelmDeploy -> Run tests -> App deployed to K8s -> T
 * **Documentation Website**: Launch a clean, searchable site with live demos and usage guides.
 * **v1.0.0 Release**: Package stable features, write release notes, and launch publicly.
 
+![Roadmap](image.png)
 ---
 
 ## 📣 Feedback & Contributions
