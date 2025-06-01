@@ -44,16 +44,11 @@ public class HelmClient {
                     builder.command().add(value);
                 }
                 logger.info("Executing Helm install command: " + String.join(" ", builder.command()));
-                builder.inheritIO();
-                Process process = builder.start();
-                int exitCode = process.waitFor();
-                if (exitCode != 0) {
-                    throw new RuntimeException("Helm install failed with exit code: " + exitCode);
-                }
+                runAndLogProcess(builder, "Helm install: " + chartDescriptor.getReleaseName());
 
                 waitForResourcesReady(chartDescriptor.getNamespace());
                 success = true;
-
+                waitForPodsReady(chartDescriptor.getNamespace());
             } catch (Exception e) {
                 attempt++;
                 if (attempt >= maxRetries) {
@@ -72,6 +67,7 @@ public class HelmClient {
      * @throws Exception if the pods do not become ready within the timeout
      */
     private void waitForResourcesReady(String namespace) throws Exception {
+        logger.info("☑ Checking pod readiness in namespace: " + namespace);
         ProcessBuilder builder = new ProcessBuilder(
                 "kubectl", "get", "pods", "-n", namespace, "--no-headers"
         );
@@ -87,15 +83,16 @@ public class HelmClient {
                     line.contains("Running") && !line.contains("0/")
             );
 
-            logger.info("Checking if all pods are ready in namespace: " + namespace);
-
-            if (allReady) return;
+            if (allReady) {
+                logger.info("🤩 All pods in namespace '" + namespace + "' are Running.");
+                return;
+            }
 
             Thread.sleep(2000);
             waited += 2;
         }
 
-        throw new RuntimeException("Timed out waiting for pods to become ready in namespace: " + namespace);
+        throw new RuntimeException("❌ Timed out waiting for pods to become ready in namespace: " + namespace);
     }
 
     /**
@@ -117,12 +114,7 @@ public class HelmClient {
                         chartDescriptor.getReleaseName(),
                         "--namespace", chartDescriptor.getNamespace()
                 );
-                builder.inheritIO();
-                Process process = builder.start();
-                int exitCode = process.waitFor();
-                if (exitCode != 0) {
-                    throw new RuntimeException("Helm uninstall failed with exit code: " + exitCode);
-                }
+                runAndLogProcess(builder, "Helm uninstall: " + chartDescriptor.getReleaseName());
 
                 confirmResourcesDeleted(chartDescriptor.getNamespace());
                 success = true;
@@ -130,7 +122,7 @@ public class HelmClient {
             } catch (Exception e) {
                 attempt++;
                 if (attempt >= maxRetries) {
-                    throw new RuntimeException("Helm uninstall failed after " + maxRetries + " attempts", e);
+                    throw new RuntimeException("𐄂 Helm uninstall failed after " + maxRetries + " attempts", e);
                 }
                 Thread.sleep(2000); // backoff before retry
             }
@@ -163,7 +155,7 @@ public class HelmClient {
             waited += 2;
         }
 
-        throw new RuntimeException("Timeout: some pods still exist in namespace: " + namespace);
+        throw new RuntimeException("⏱ Timeout: some pods still exist in namespace: " + namespace);
     }
 
     /**
@@ -175,13 +167,7 @@ public class HelmClient {
      */
     private void deleteNamespace(String namespace) throws Exception {
         ProcessBuilder builder = new ProcessBuilder("kubectl", "delete", "namespace", namespace);
-        builder.inheritIO();
-        Process process = builder.start();
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new RuntimeException("Failed to delete namespace: " + namespace);
-        }
-
+        runAndLogProcess(builder, "kubectl delete namespace: " + namespace);
         waitForNamespaceDeleted(namespace);
     }
 
@@ -193,6 +179,7 @@ public class HelmClient {
      * @throws Exception if the namespace does not get deleted within the timeout
      */
     private void waitForNamespaceDeleted(String namespace) throws Exception {
+        logger.info("Waiting for namespace '" + namespace + "' to be deleted...");
         ProcessBuilder builder = new ProcessBuilder("kubectl", "get", "namespace", namespace);
 
         int maxWaitSeconds = 60;
@@ -206,6 +193,74 @@ public class HelmClient {
             waited += 2;
         }
 
+        logger.warning("Namespace deletion timeout: " + namespace);
         throw new RuntimeException("Namespace deletion timeout: " + namespace);
+    }
+
+    /**
+     * Waits for all pods in the specified namespace to be ready.
+     * It checks the status of the pods and waits until all are running and have no restarts.
+     *
+     * @param namespace the Kubernetes namespace to check
+     * @throws Exception if the pods do not become ready within the timeout
+     */
+    private void waitForPodsReady(String namespace) throws Exception {
+        logger.info("Waiting for pods in namespace '" + namespace + "' to be Ready...");
+        int maxWaitSeconds = 60;
+        int waited = 0;
+
+        while (waited < maxWaitSeconds) {
+            ProcessBuilder pb = new ProcessBuilder(
+                    "kubectl", "get", "pods", "-n", namespace, "--no-headers"
+            );
+
+            Process process = pb.start();
+            process.waitFor();
+
+            String output = new String(process.getInputStream().readAllBytes());
+            if (output.trim().isEmpty()) {
+                Thread.sleep(2000);
+                waited += 2;
+                continue;
+            }
+
+            boolean allReady = output.lines().allMatch(line ->
+                    line.contains("Running") &&
+                            !line.contains("0/") &&  // "0/1" means not ready
+                            !line.contains("CrashLoopBackOff") &&
+                            !line.contains("Error")
+            );
+
+            if (allReady) {
+                logger.info("All pods in namespace [" + namespace + "] are Ready.");
+                return;
+            }
+
+            Thread.sleep(2000);
+            waited += 2;
+        }
+
+        logger.warning("Timeout waiting for pods to become ready in namespace: " + namespace);
+        throw new RuntimeException("⏱️ Timeout waiting for pods to be ready in namespace: " + namespace);
+    }
+
+    private void runAndLogProcess(ProcessBuilder builder, String contextDescription) throws Exception {
+        Process process = builder.start();
+
+        String output = new String(process.getInputStream().readAllBytes());
+        String error = new String(process.getErrorStream().readAllBytes());
+
+        int exitCode = process.waitFor();
+
+        if (!output.isBlank()) {
+            logger.info("[" + contextDescription + "] STDOUT:\n" + output);
+        }
+        if (!error.isBlank()) {
+            logger.warning("[" + contextDescription + "] STDERR:\n" + error);
+        }
+
+        if (exitCode != 0) {
+            throw new RuntimeException("[" + contextDescription + "] failed with exit code " + exitCode);
+        }
     }
 }
