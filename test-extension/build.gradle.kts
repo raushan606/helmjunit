@@ -9,9 +9,17 @@ repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+
+    // Needed because you're referencing @ExtendWith in src/main
+    implementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
 }
 
 tasks.test {
