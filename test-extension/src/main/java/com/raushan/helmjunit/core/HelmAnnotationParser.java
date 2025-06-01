@@ -6,12 +6,15 @@ import com.raushan.helmjunit.modal.HelmChartDescriptor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * HelmAnnotationParser is responsible for parsing Helm annotations from a given test class.
  * It extracts Helm chart descriptors based on the HelmResource annotations present in the class fields.
  */
 public class HelmAnnotationParser {
+
+    Logger logger = Logger.getLogger(HelmAnnotationParser.class.getName());
 
     /**
      * Parses the Helm annotations from the specified test class.
@@ -23,6 +26,7 @@ public class HelmAnnotationParser {
      */
     public List<HelmChartDescriptor> parseHelmAnnotations(Class<?> testClass) {
         List<HelmChartDescriptor> helmChartDescriptors = new ArrayList<>();
+        logger.info("📜 Parsing Helm annotations in class: " + testClass.getSimpleName());
         for (Field field : testClass.getDeclaredFields()) {
             HelmResource helmResource = field.getAnnotation(HelmResource.class);
             if (helmResource != null) {

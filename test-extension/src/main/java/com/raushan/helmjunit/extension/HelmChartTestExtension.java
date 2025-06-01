@@ -22,11 +22,11 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
      */
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        logger.info("Preparing Helm chart test environment...");
+        logger.info("🍲 Preparing Helm chart test environment...");
         Class<?> testClass = extensionContext.getRequiredTestClass();
         List<HelmChartDescriptor> charts = new HelmAnnotationParser().parseHelmAnnotations(testClass);
         for (HelmChartDescriptor chart : charts) {
-            logger.info("Installing Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
+            logger.info("🏗️ Installing Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
             helmClient.installChart(chart);
         }
     }
@@ -37,11 +37,11 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
      */
     @Override
     public void afterAll(ExtensionContext extensionContext) throws Exception {
-        logger.info("Cleaning up Helm chart test environment...");
+        logger.info("🧹 Cleaning up Helm chart test environment...");
         Class<?> testClass = extensionContext.getRequiredTestClass();
         List<HelmChartDescriptor> charts = new HelmAnnotationParser().parseHelmAnnotations(testClass);
         for (HelmChartDescriptor chart : charts) {
-            logger.info("Uninstalling Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
+            logger.info("🚨 Uninstalling Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
             helmClient.uninstallChart(chart);
         }
     }
