@@ -1,6 +1,7 @@
 package com.raushan.helmjunit.core;
 
 import com.raushan.helmjunit.annotation.HelmResource;
+import com.raushan.helmjunit.modal.HelmChartDescriptor;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
