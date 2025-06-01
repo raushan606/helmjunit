@@ -32,4 +32,5 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @Target(ElementType.TYPE)
 @ExtendWith(HelmChartTestExtension.class)
 public @interface HelmChartTest {
+    boolean perTestLifecycle() default false;
 }
