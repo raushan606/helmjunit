@@ -86,8 +86,7 @@ class HelmChartValidationIT {
 
 ### Lifecycle Diagram
 
-![LifecycleDiagram](image-1.png)
-
+![Test LifeCycle Flow Diagram](docs/LifecycleFlowDiagram.png)
 
 ### System Architecture
 
