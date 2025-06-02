@@ -22,9 +22,9 @@ public class HelmReleaseTest {
     @Test
     void testHandleInjectedCorrectly() {
         assertNotNull(nginx);
-        assertEquals("nginx-port", nginx.getReleaseName());
-        assertEquals("nginx-port-ns", nginx.getNamespace());
-        assertEquals("nginx-port", nginx.getServiceName());
-        assertInstanceOf(Integer.class, nginx.getServicePort());
+        assertEquals("nginx-port", nginx.releaseName());
+        assertEquals("nginx-port-ns", nginx.namespace());
+        assertEquals("nginx-port", nginx.serviceName());
+        assertInstanceOf(Integer.class, nginx.servicePort());
     }
 }

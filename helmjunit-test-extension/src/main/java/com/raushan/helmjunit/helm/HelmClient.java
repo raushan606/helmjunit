@@ -33,24 +33,24 @@ public class HelmClient {
                 ProcessBuilder builder = new ProcessBuilder();
                 builder.command().add("helm");
                 builder.command().add("install");
-                builder.command().add(chartDescriptor.getReleaseName());
-                builder.command().add(chartDescriptor.getChart());
+                builder.command().add(chartDescriptor.releaseName());
+                builder.command().add(chartDescriptor.chart());
                 builder.command().add("--namespace");
-                builder.command().add(chartDescriptor.getNamespace());
+                builder.command().add(chartDescriptor.namespace());
                 builder.command().add("--create-namespace");
                 builder.command().add("--wait");
                 builder.command().add("--timeout");
                 builder.command().add("120s");
 
-                for (String value : chartDescriptor.getValues()) {
+                for (String value : chartDescriptor.values()) {
                     builder.command().add("--set");
                     builder.command().add(value);
                 }
                 logger.info("Executing Helm install command: " + String.join(" ", builder.command()));
-                runAndLogProcess(builder, "Helm install: " + chartDescriptor.getReleaseName());
+                runAndLogProcess(builder, "Helm install: " + chartDescriptor.releaseName());
 
-                waitForResourcesReady(chartDescriptor.getNamespace());
-                waitForPodsReady(chartDescriptor.getNamespace());
+                waitForResourcesReady(chartDescriptor.namespace());
+                waitForPodsReady(chartDescriptor.namespace());
                 success = true;
             } catch (Exception e) {
                 attempt++;
@@ -114,14 +114,14 @@ public class HelmClient {
             try {
                 ProcessBuilder builder = new ProcessBuilder(
                         "helm", "uninstall",
-                        chartDescriptor.getReleaseName(),
-                        "--namespace", chartDescriptor.getNamespace()
+                        chartDescriptor.releaseName(),
+                        "--namespace", chartDescriptor.namespace()
                 );
-                runAndLogProcess(builder, "Helm uninstall: " + chartDescriptor.getReleaseName());
+                runAndLogProcess(builder, "Helm uninstall: " + chartDescriptor.releaseName());
 
-                confirmResourcesDeleted(chartDescriptor.getNamespace());
+                confirmResourcesDeleted(chartDescriptor.namespace());
                 success = true;
-                deleteNamespace(chartDescriptor.getNamespace());
+                deleteNamespace(chartDescriptor.namespace());
             } catch (Exception e) {
                 attempt++;
                 if (attempt >= maxRetries) {
@@ -269,18 +269,18 @@ public class HelmClient {
 
     public void injectHelmServiceHandle(Object testInstance, HelmChartDescriptor chartDescriptor) {
         try {
-            String port = getServicePort(chartDescriptor.getReleaseName(), chartDescriptor.getNamespace());
+            String port = getServicePort(chartDescriptor.releaseName(), chartDescriptor.namespace());
             Class<?> testClass = testInstance.getClass();
             for (Field field : testClass.getDeclaredFields()) {
                 if (field.getType().equals(HelmRelease.class)) {
                     HelmResource annotation = field.getAnnotation(HelmResource.class);
-                    if (annotation != null && annotation.releaseName().equals(chartDescriptor.getReleaseName())) {
+                    if (annotation != null && annotation.releaseName().equals(chartDescriptor.releaseName())) {
                         try {
                             field.setAccessible(true);
                             String serviceName = annotation.releaseName();
                             HelmRelease handle = new HelmRelease(
-                                    chartDescriptor.getReleaseName(),
-                                    chartDescriptor.getNamespace(),
+                                    chartDescriptor.releaseName(),
+                                    chartDescriptor.namespace(),
                                     serviceName,
                                     Integer.parseInt(port)
                             );

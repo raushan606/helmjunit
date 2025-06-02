@@ -65,7 +65,7 @@ class HelmAnnotationParserTest {
         HelmAnnotationParser parser = new HelmAnnotationParser();
         List<HelmChartDescriptor> charts = parser.parseHelmAnnotations(EmptyValuesClass.class);
         assertEquals(1, charts.size());
-        assertTrue(charts.get(0).getValues().isEmpty());
+        assertTrue(charts.get(0).values().isEmpty());
     }
 
     @Test
@@ -73,8 +73,8 @@ class HelmAnnotationParserTest {
         HelmAnnotationParser parser = new HelmAnnotationParser();
         List<HelmChartDescriptor> charts = parser.parseHelmAnnotations(DuplicateReleaseClass.class);
         assertEquals(2, charts.size());
-        assertEquals("same", charts.get(0).getReleaseName());
-        assertEquals("same", charts.get(1).getReleaseName());
+        assertEquals("same", charts.get(0).releaseName());
+        assertEquals("same", charts.get(1).releaseName());
         //TODO: add conflict detection logic later
     }
 
@@ -84,10 +84,10 @@ class HelmAnnotationParserTest {
         List<HelmChartDescriptor> helmChartDescriptors = helmAnnotationParser.parseHelmAnnotations(SingleChartTest.class);
         assertEquals(1, helmChartDescriptors.size(), "Should parse one Helm chart descriptor");
         HelmChartDescriptor descriptor = helmChartDescriptors.get(0);
-        assertEquals("bitnami/keycloak", descriptor.getChart(), "Chart name should match");
-        assertEquals("singlecharttest-keycloak", descriptor.getReleaseName(), "Release name should be generated correctly");
-        assertEquals("default", descriptor.getNamespace(), "Namespace should default to 'default'");
-        assertEquals(List.of("replicaCount=1"), descriptor.getValues(), "Values should match the annotation");
+        assertEquals("bitnami/keycloak", descriptor.chart(), "Chart name should match");
+        assertEquals("singlecharttest-keycloak", descriptor.releaseName(), "Release name should be generated correctly");
+        assertEquals("default", descriptor.namespace(), "Namespace should default to 'default'");
+        assertEquals(List.of("replicaCount=1"), descriptor.values(), "Values should match the annotation");
     }
 
     @Test
@@ -97,15 +97,15 @@ class HelmAnnotationParserTest {
         assertEquals(2, helmChartDescriptors.size(), "Should parse two Helm chart descriptors");
 
         HelmChartDescriptor nginxDescriptor = helmChartDescriptors.get(0);
-        assertEquals("bitnami/nginx", nginxDescriptor.getChart(), "Nginx chart name should match");
-        assertEquals("nginx-release", nginxDescriptor.getReleaseName(), "Nginx release name should match");
-        assertEquals("nginx-namespace", nginxDescriptor.getNamespace(), "Nginx namespace should match");
-        assertEquals(List.of("replicaCount=1"), nginxDescriptor.getValues(), "Nginx values should match the annotation");
+        assertEquals("bitnami/nginx", nginxDescriptor.chart(), "Nginx chart name should match");
+        assertEquals("nginx-release", nginxDescriptor.releaseName(), "Nginx release name should match");
+        assertEquals("nginx-namespace", nginxDescriptor.namespace(), "Nginx namespace should match");
+        assertEquals(List.of("replicaCount=1"), nginxDescriptor.values(), "Nginx values should match the annotation");
 
         HelmChartDescriptor postgresDescriptor = helmChartDescriptors.get(1);
-        assertEquals("bitnami/postgresql", postgresDescriptor.getChart(), "PostgreSQL chart name should match");
-        assertEquals("postgres-release", postgresDescriptor.getReleaseName(), "PostgreSQL release name should match");
-        assertEquals("postgres-namespace", postgresDescriptor.getNamespace(), "PostgreSQL namespace should match");
-        assertEquals(List.of("replicaCount=1", "version=14"), postgresDescriptor.getValues(), "PostgreSQL values should match the annotation");
+        assertEquals("bitnami/postgresql", postgresDescriptor.chart(), "PostgreSQL chart name should match");
+        assertEquals("postgres-release", postgresDescriptor.releaseName(), "PostgreSQL release name should match");
+        assertEquals("postgres-namespace", postgresDescriptor.namespace(), "PostgreSQL namespace should match");
+        assertEquals(List.of("replicaCount=1", "version=14"), postgresDescriptor.values(), "PostgreSQL values should match the annotation");
     }
 }

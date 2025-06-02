@@ -31,7 +31,7 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
             Class<?> testClass = extensionContext.getRequiredTestClass();
             charts = new HelmAnnotationParser().parseHelmAnnotations(testClass);
             for (HelmChartDescriptor chart : charts) {
-                logger.info("🏗️ Installing Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
+                logger.info("🏗️ Installing Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
                 helmClient.installChart(chart);
             }
         }
@@ -46,7 +46,7 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
             Class<?> testClass = extensionContext.getRequiredTestClass();
             charts = new HelmAnnotationParser().parseHelmAnnotations(testClass);
             for (HelmChartDescriptor chart : charts) {
-                logger.info("🚨 Uninstalling Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
+                logger.info("🚨 Uninstalling Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
                 helmClient.uninstallChart(chart);
             }
         }
@@ -58,7 +58,7 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
             logger.info("🪃 Preparing for Helm chart test...");
             List<HelmChartDescriptor> charts = new HelmAnnotationParser().parseHelmAnnotations(extensionContext.getRequiredTestClass());
             for (HelmChartDescriptor chart : charts) {
-                logger.info("📩 Installing Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
+                logger.info("📩 Installing Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
                 helmClient.installChart(chart);
             }
         }
@@ -77,7 +77,7 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
             logger.info("🕯️ Cleaning up after Helm chart test...");
             List<HelmChartDescriptor> charts = new HelmAnnotationParser().parseHelmAnnotations(extensionContext.getRequiredTestClass());
             for (HelmChartDescriptor chart : charts) {
-                logger.info("🚨 Uninstalling Helm chart: " + chart.getChart() + " with release name: " + chart.getReleaseName());
+                logger.info("🚨 Uninstalling Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
                 helmClient.uninstallChart(chart);
             }
         }
