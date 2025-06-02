@@ -208,7 +208,6 @@ Write Test -> Annotate with @HelmResource -> Test runs -> Helm install -> Wait f
 * **JUnit Report Output**: Enrich test results with Helm metadata, logs, and failure diagnostics.
 * **Kubernetes Event Dump**: On test failure, store events and describe pod output.
 * **GitHub Actions Examples**: Provide ready-to-use CI templates for users.
-* **Optional Visual Monitoring**: Add browser snapshots or UI tests via Playwright/WebDriver.
 
 ### 🚀 Phase 5: Developer Experience (DX)
 
