@@ -33,6 +33,8 @@ replay_pid*
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-/test-extension/build/
-/test-extension/.gradle/
+/helmjunit-test-extension/.gradle/
 .gradle/
+.vscode
+/helmjunit-test-extension/build/
+.idea

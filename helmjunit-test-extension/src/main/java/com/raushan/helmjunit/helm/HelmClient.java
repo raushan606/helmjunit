@@ -1,7 +1,10 @@
 package com.raushan.helmjunit.helm;
 
+import com.raushan.helmjunit.annotation.HelmResource;
 import com.raushan.helmjunit.modal.HelmChartDescriptor;
+import com.raushan.helmjunit.modal.HelmRelease;
 
+import java.lang.reflect.Field;
 import java.util.logging.Logger;
 
 /**
@@ -47,8 +50,8 @@ public class HelmClient {
                 runAndLogProcess(builder, "Helm install: " + chartDescriptor.getReleaseName());
 
                 waitForResourcesReady(chartDescriptor.getNamespace());
-                success = true;
                 waitForPodsReady(chartDescriptor.getNamespace());
+                success = true;
             } catch (Exception e) {
                 attempt++;
                 if (attempt >= maxRetries) {
@@ -262,5 +265,47 @@ public class HelmClient {
         if (exitCode != 0) {
             throw new RuntimeException("[" + contextDescription + "] failed with exit code " + exitCode);
         }
+    }
+
+    public void injectHelmServiceHandle(Object testInstance, HelmChartDescriptor chartDescriptor) {
+        try {
+            String port = getServicePort(chartDescriptor.getReleaseName(), chartDescriptor.getNamespace());
+            Class<?> testClass = testInstance.getClass();
+            for (Field field : testClass.getDeclaredFields()) {
+                if (field.getType().equals(HelmRelease.class)) {
+                    HelmResource annotation = field.getAnnotation(HelmResource.class);
+                    if (annotation != null && annotation.releaseName().equals(chartDescriptor.getReleaseName())) {
+                        try {
+                            field.setAccessible(true);
+                            String serviceName = annotation.releaseName();
+                            HelmRelease handle = new HelmRelease(
+                                    chartDescriptor.getReleaseName(),
+                                    chartDescriptor.getNamespace(),
+                                    serviceName,
+                                    Integer.parseInt(port)
+                            );
+                            field.set(testInstance, handle);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException("Failed to inject HelmRelease", e);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to inject HelmRelease", e);
+        }
+    }
+
+    private String getServicePort(String releaseName, String namespace) throws Exception {
+        ProcessBuilder builder = new ProcessBuilder(
+                "kubectl", "get", "svc", releaseName, "-n", namespace,
+                "-o", "jsonpath={.spec.ports[0].port}"
+        );
+        Process process = builder.start();
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new RuntimeException("Failed to get service port for " + releaseName);
+        }
+        return new String(process.getInputStream().readAllBytes());
     }
 }

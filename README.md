@@ -2,7 +2,7 @@
 
 ## 📘 Overview
 
-HelmJUnit is a JUnit 5 extension for running integration tests against applications deployed via Helm on Kubernetes. It helps Java developers write realistic tests by automatically managing Helm chart deployments, waiting for readiness, exposing service access, and cleaning up Kubernetes resources after test execution.
+HelmJUnit is a JUnit 5 extension for running integration tests against applications deployed via Helm on Kubernetes. It helps Java developers write realistic tests by automatically managing Helm chart deployments, waiting for readiness, exposing service access via port forwarding, injecting service metadata into test classes, and cleaning up Kubernetes resources after test execution.
 
 ---
 
@@ -46,13 +46,18 @@ HelmJUnit is a JUnit 5 extension for running integration tests against applicati
 * Allow test code to access these services via port forwarding.
 
 ```java
-@HelmDeploy(chart = "bitnami/redis", namespace = "test")
-@HelmDeploy(chart = "bitnami/postgresql", namespace = "test")
-class OrderServiceIT {
+@HelmChartTest
+public class OrderServiceIT {
+
+  @HelmResource(chart = "bitnami/redis", releaseName = "redis", namespace = "test")
+  HelmRelease redis;
+
+  @HelmResource(chart = "bitnami/postgresql", releaseName = "postgres", namespace = "test")
+  HelmRelease postgres;
 
   @Test
   void shouldStoreOrderInPostgresAndEmitEventToRedis() {
-    // Use JDBC and Redis client to perform assertions
+    // Use postgres.getNamespace(), redis.getServiceName(), etc.
   }
 }
 ```
@@ -68,14 +73,49 @@ class OrderServiceIT {
 * Confirm endpoints are reachable.
 
 ```java
-@HelmDeploy(chart = "../charts/my-app", namespace = "test", wait = true)
+@HelmChartTest
 class HelmChartValidationIT {
+
+  @HelmResource(chart = "../charts/my-app", releaseName = "my-app", namespace = "test")
+  HelmRelease app;
 
   @Test
   void shouldReachReadyStateAndExposeHttpPort() {
-    String baseUrl = TestServiceAccess.url("my-app", 8080);
-    HttpResponse res = Http.get(baseUrl + "/health");
-    assertEquals(200, res.statusCode());
+    try (PortForwardManager pf = new PortForwardManager("svc/" + app.getServiceName(), app.getServicePort(), app.getNamespace())) {
+      String url = pf.getLocalUrl();
+      HttpResponse<String> res = HttpClient.newHttpClient()
+        .send(HttpRequest.newBuilder().uri(URI.create(url + "/health")).build(),
+              HttpResponse.BodyHandlers.ofString());
+
+      assertEquals(200, res.statusCode());
+    }
+  }
+}
+```
+
+### 8. **Real-World Use Case: Injecting HelmRelease for Validation**
+
+**Scenario:** Developers want to validate that a Helm chart is deployed correctly and its services are accessible.
+
+**Solution with HelmJUnit:**
+
+* Use the `@HelmResource` annotation to deploy a Helm chart and inject the resulting `HelmRelease` object.
+* Perform assertions on the injected handle or use it for port forwarding.
+
+```java
+@HelmChartTest
+public class HelmReleaseTest {
+
+  @HelmResource(chart = "bitnami/nginx", releaseName = "nginx-port", namespace = "nginx-port-ns")
+  HelmRelease nginx;
+
+  @Test
+  void testHandleInjectedCorrectly() {
+    assertNotNull(nginx);
+    assertEquals("nginx-port", nginx.getReleaseName());
+    assertEquals("nginx-port-ns", nginx.getNamespace());
+    assertEquals("nginx-port", nginx.getServiceName());
+    assertTrue(nginx.getServicePort() > 0);
   }
 }
 ```
@@ -93,46 +133,47 @@ class HelmChartValidationIT {
 ```
 JUnit 5 Extension
      │
-     ├─> Kubernetes Client (Fabric8)
-     ├─> Helm CLI wrapper (ProcessBuilder)
-     └─> Port Forward Manager
-            └──> expose service URLs to test code
+     ├─> HelmClient (wraps Helm CLI via ProcessBuilder)
+     ├─> Pod and Service readiness via kubectl
+     └─> PortForwardManager
+            └──> exposes service URLs to test code
 ```
 
 ### Developer Flow
 
 ```
-Write Test -> Annotate with @HelmDeploy -> Run tests -> App deployed to K8s -> Test runs -> App destroyed
+Write Test -> Annotate with @HelmResource -> Test runs -> Helm install -> Wait for pods -> Inject handles -> Access service -> Helm uninstall
 ```
 
 ---
 
-## 🏗️ Proposed Implementation
+## 🏗️ Implementation Summary
 
 ### Technologies
 
 * **JUnit 5 Extension API**
-* **Fabric8 Kubernetes Client**
 * **Helm CLI via ProcessBuilder**
-* **OkHttp or Java HTTP Client** for service interaction
+* **kubectl for pod/service status and logs**
+* **Java HTTP Client** for service testing
 
 ### Key Components
 
-1. `@HelmDeploy` – Declares chart location, namespace, and config.
-2. `HelmTestExtension` – JUnit 5 lifecycle integration.
-3. `KubernetesHelper` – Handles pod readiness, logs, and services.
-4. `HelmClient` – Wrapper around Helm CLI.
-5. `TestServiceAccess` – Helps form URLs for service access.
+1. `@HelmChartTest` – Marks test classes using HelmJUnit.
+2. `@HelmResource` – Declares chart and test resource metadata.
+3. `HelmChartTestExtension` – JUnit 5 extension that installs, waits, injects, and cleans up.
+4. `HelmClient` – Wrapper around Helm install/uninstall and readiness logic.
+5. `PortForwardManager` – Handles temporary port forwarding to access cluster-internal services.
+6. `HelmRelease` – Injected object giving service access metadata to the test.
 
 ---
 
 ## 📓 Developer Notes
 
-* Follow JUnit 5 extension model for test lifecycle.
-* Implement Helm CLI wrapper that uses `ProcessBuilder`.
-* Use Fabric8 for pod/service readiness checks.
-* Track all deployed namespaces/charts to ensure cleanup.
-* Support values files, wait flags, and multiple charts.
+* Follow JUnit 5 lifecycle separation: install in `BeforeAll`, inject in `BeforeEach`.
+* Automatically extract service ports using `kubectl get svc`.
+* Inject `HelmRelease` with releaseName, namespace, serviceName, and resolved port.
+* Port forward dynamically selected local ports for service testing.
+* Plan support for YAML value files and `valuesFrom` integration.
 
 ---
 
@@ -140,12 +181,13 @@ Write Test -> Annotate with @HelmDeploy -> Run tests -> App deployed to K8s -> T
 
 ### ✅ Phase 1: MVP (Minimum Viable Product)
 
-* **JUnit 5 Extension Scaffolding**: Build basic `@HelmDeploy` and `HelmTestExtension` with support for `BeforeEachCallback`, `AfterEachCallback`, etc.
-* **Helm Chart Installation**: Use Helm CLI to install and uninstall charts from local or remote sources.
-* **Kubernetes Readiness Probes**: Wait for all pods to become ready using Fabric8 based on label selectors.
-* **Service Access via Port Forwarding**: Enable test code to connect to internal Kubernetes services via ephemeral port forwarding.
-* **Log Collection**: On test failure, capture pod logs and Kubernetes events to assist debugging.
-* **Resource Cleanup**: Automatically uninstall Helm releases and delete namespaces if created for test.
+* ✅ JUnit 5 Extension scaffolding (`@HelmChartTest`, `@HelmResource`)
+* ✅ Helm CLI integration with install/uninstall logic
+* ✅ Pod readiness and Helm retries with timeouts
+* ✅ Injected `HelmRelease` into test instance
+* ✅ Service port extraction from Kubernetes
+* ✅ Port forwarding utility for service access
+* ✅ Resource cleanup after test (uninstall + namespace delete)
 
 ### 🔄 Phase 2: Enhanced Usability
 

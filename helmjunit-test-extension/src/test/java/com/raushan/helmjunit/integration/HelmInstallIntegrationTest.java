@@ -2,6 +2,7 @@ package com.raushan.helmjunit.integration;
 
 import com.raushan.helmjunit.annotation.HelmChartTest;
 import com.raushan.helmjunit.annotation.HelmResource;
+import com.raushan.helmjunit.modal.HelmRelease;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
@@ -13,6 +14,7 @@ import java.net.http.HttpResponse;
 
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @HelmChartTest
@@ -24,10 +26,11 @@ public class HelmInstallIntegrationTest {
             namespace = "nginx-integration-test",
             values = {"replicaCount=2", "service.type=ClusterIP"}
     )
-    private Object nginx;
+    private HelmRelease nginx;
 
     @Test
     void verifyNginxDeployment() throws Exception {
+        assertNotNull(nginx);
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "kubectl", "get", "pods", "-n", "nginx-integration-test",
                 "-l", "app.kubernetes.io/instance=nginx-test"
