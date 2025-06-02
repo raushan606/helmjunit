@@ -35,3 +35,4 @@ replay_pid*
 /dataSources.local.xml
 /test-extension/build/
 /test-extension/.gradle/
+.gradle/
