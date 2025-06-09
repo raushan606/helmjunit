@@ -1,12 +1,23 @@
 plugins {
     id("java")
+    `java-library`
+    `maven-publish`
 }
 
 group = "com.raushan.helmjunit"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
+}
+
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
 }
 
 java {
