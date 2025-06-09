@@ -4,7 +4,6 @@ import com.raushan.helmjunit.annotation.HelmChartTest;
 import com.raushan.helmjunit.core.HelmAnnotationParser;
 import com.raushan.helmjunit.helm.HelmClient;
 import com.raushan.helmjunit.modal.HelmChartDescriptor;
-import com.raushan.helmjunit.util.ClusterProvisioner;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -25,14 +24,6 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // Check if minikube is running for local development
-        if (isLocalDevelopment(extensionContext)) {
-            logger.info("🛠️ MiniKube mode is enabled. Ensuring Minikube is running...");
-            ClusterProvisioner.startMiniKube();
-        } else {
-            logger.info("🛠️ MiniKube mode is disabled. Skipping Minikube checks.");
-        }
-
         if (isPerTestLifecycle(extensionContext)) {
             logger.info("ℹ️ Per-test lifecycle enabled. Helm chart will be installed before each test.");
         } else {
@@ -58,13 +49,6 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
                 logger.info("🚨 Uninstalling Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
                 helmClient.uninstallChart(chart);
             }
-        }
-
-        if (isLocalDevelopment(extensionContext)) {
-            logger.info("🛠️ MiniKube mode is enabled. Stopping Minikube...");
-            ClusterProvisioner.stopMiniKube();
-        } else {
-            logger.info("🛠️ MiniKube mode is disabled. Skipping Minikube stop.");
         }
     }
 
@@ -101,9 +85,5 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
 
     private static boolean isPerTestLifecycle(ExtensionContext extensionContext) {
         return extensionContext.getRequiredTestClass().getAnnotation(HelmChartTest.class).perTestLifecycle();
-    }
-
-    private static boolean isLocalDevelopment(ExtensionContext extensionContext) {
-        return extensionContext.getRequiredTestClass().getAnnotation(HelmChartTest.class).localDevelopment();
     }
 }
