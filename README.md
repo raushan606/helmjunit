@@ -49,16 +49,16 @@ HelmJUnit is a JUnit 5 extension for running integration tests against applicati
 @HelmChartTest
 public class OrderServiceIT {
 
-  @HelmResource(chart = "bitnami/redis", releaseName = "redis", namespace = "test")
-  HelmRelease redis;
+    @HelmResource(chart = "bitnami/redis", releaseName = "redis", namespace = "test")
+    HelmRelease redis;
 
-  @HelmResource(chart = "bitnami/postgresql", releaseName = "postgres", namespace = "test")
-  HelmRelease postgres;
+    @HelmResource(chart = "bitnami/postgresql", releaseName = "postgres", namespace = "test")
+    HelmRelease postgres;
 
-  @Test
-  void shouldStoreOrderInPostgresAndEmitEventToRedis() {
-    // Use postgres.getNamespace(), redis.getServiceName(), etc.
-  }
+    @Test
+    void shouldStoreOrderInPostgresAndEmitEventToRedis() {
+        // Use postgres.getNamespace(), redis.getServiceName(), etc.
+    }
 }
 ```
 
@@ -76,20 +76,20 @@ public class OrderServiceIT {
 @HelmChartTest
 class HelmChartValidationIT {
 
-  @HelmResource(chart = "../charts/my-app", releaseName = "my-app", namespace = "test")
-  HelmRelease app;
+    @HelmResource(chart = "../charts/my-app", releaseName = "my-app", namespace = "test")
+    HelmRelease app;
 
-  @Test
-  void shouldReachReadyStateAndExposeHttpPort() {
-    try (PortForwardManager pf = new PortForwardManager("svc/" + app.getServiceName(), app.getServicePort(), app.getNamespace())) {
-      String url = pf.getLocalUrl();
-      HttpResponse<String> res = HttpClient.newHttpClient()
-        .send(HttpRequest.newBuilder().uri(URI.create(url + "/health")).build(),
-              HttpResponse.BodyHandlers.ofString());
+    @Test
+    void shouldReachReadyStateAndExposeHttpPort() {
+        try (PortForwardManager pf = new PortForwardManager("svc/" + app.getServiceName(), app.getServicePort(), app.getNamespace())) {
+            String url = pf.getLocalUrl();
+            HttpResponse<String> res = HttpClient.newHttpClient()
+                    .send(HttpRequest.newBuilder().uri(URI.create(url + "/health")).build(),
+                            HttpResponse.BodyHandlers.ofString());
 
-      assertEquals(200, res.statusCode());
+            assertEquals(200, res.statusCode());
+        }
     }
-  }
 }
 ```
 
@@ -106,17 +106,17 @@ class HelmChartValidationIT {
 @HelmChartTest
 public class HelmReleaseTest {
 
-  @HelmResource(chart = "bitnami/nginx", releaseName = "nginx-port", namespace = "nginx-port-ns")
-  HelmRelease nginx;
+    @HelmResource(chart = "bitnami/nginx", releaseName = "nginx-port", namespace = "nginx-port-ns")
+    HelmRelease nginx;
 
-  @Test
-  void testHandleInjectedCorrectly() {
-    assertNotNull(nginx);
-    assertEquals("nginx-port", nginx.getReleaseName());
-    assertEquals("nginx-port-ns", nginx.getNamespace());
-    assertEquals("nginx-port", nginx.getServiceName());
-    assertTrue(nginx.getServicePort() > 0);
-  }
+    @Test
+    void testHandleInjectedCorrectly() {
+        assertNotNull(nginx);
+        assertEquals("nginx-port", nginx.getReleaseName());
+        assertEquals("nginx-port-ns", nginx.getNamespace());
+        assertEquals("nginx-port", nginx.getServiceName());
+        assertTrue(nginx.getServicePort() > 0);
+    }
 }
 ```
 
@@ -198,7 +198,6 @@ Write Test -> Annotate with @HelmResource -> Test runs -> Helm install -> Wait f
 
 ### 📦 Phase 3: Extensibility
 
-* **Kustomize or CRD Support**: Add hooks to support non-Helm resources, like Kustomize or raw manifests.
 * **Pod Execution Utilities**: Provide `kubectl exec`-like functionality from test code.
 * **Service Discovery Helpers**: Inject internal DNS/service names into test logic automatically.
 * **Hybrid Test Container Integration**: Combine HelmJUnit with Testcontainers for database or browser testing.

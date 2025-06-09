@@ -33,4 +33,5 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(HelmChartTestExtension.class)
 public @interface HelmChartTest {
     boolean perTestLifecycle() default false;
+    boolean localDevelopment() default true; // Default to true for local development mode
 }
