@@ -5,8 +5,8 @@ import com.raushan.helmjunit.core.ServiceResolver;
 import com.raushan.helmjunit.core.service.ChainedServiceResolver;
 import com.raushan.helmjunit.core.service.HelmManifestServiceResolver;
 import com.raushan.helmjunit.core.service.KubectlServiceResolver;
-import com.raushan.helmjunit.modal.HelmChartDescriptor;
-import com.raushan.helmjunit.modal.HelmRelease;
+import com.raushan.helmjunit.model.HelmChartDescriptor;
+import com.raushan.helmjunit.model.HelmRelease;
 
 import java.lang.reflect.Field;
 import java.util.Optional;

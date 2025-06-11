@@ -3,7 +3,7 @@ package com.raushan.helmjunit.extension;
 import com.raushan.helmjunit.annotation.HelmChartTest;
 import com.raushan.helmjunit.core.HelmAnnotationParser;
 import com.raushan.helmjunit.helm.HelmClient;
-import com.raushan.helmjunit.modal.HelmChartDescriptor;
+import com.raushan.helmjunit.model.HelmChartDescriptor;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;

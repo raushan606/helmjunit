@@ -1,7 +1,7 @@
 package com.raushan.helmjunit.core;
 
 import com.raushan.helmjunit.annotation.HelmResource;
-import com.raushan.helmjunit.modal.HelmChartDescriptor;
+import com.raushan.helmjunit.model.HelmChartDescriptor;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

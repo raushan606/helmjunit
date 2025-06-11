@@ -2,7 +2,7 @@ package com.raushan.helmjunit.integration;
 
 import com.raushan.helmjunit.annotation.HelmChartTest;
 import com.raushan.helmjunit.annotation.HelmResource;
-import com.raushan.helmjunit.modal.HelmRelease;
+import com.raushan.helmjunit.model.HelmRelease;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

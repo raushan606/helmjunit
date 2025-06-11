@@ -1,4 +1,4 @@
-package com.raushan.helmjunit.modal;
+package com.raushan.helmjunit.model;
 
 import java.util.List;
 
