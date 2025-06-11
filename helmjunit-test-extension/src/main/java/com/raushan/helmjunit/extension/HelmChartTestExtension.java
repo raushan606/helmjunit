@@ -2,6 +2,7 @@ package com.raushan.helmjunit.extension;
 
 import com.raushan.helmjunit.annotation.HelmChartTest;
 import com.raushan.helmjunit.core.HelmAnnotationParser;
+import com.raushan.helmjunit.core.HelmReleaseInjector;
 import com.raushan.helmjunit.helm.HelmClient;
 import com.raushan.helmjunit.model.HelmChartDescriptor;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -11,16 +12,19 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.List;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.nonNull;
 
 public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
 
-    Logger logger = Logger.getLogger(HelmChartTestExtension.class.getName());
+    Logger logger = LoggerFactory.getLogger(HelmChartTestExtension.class.getName());
 
     private final HelmClient helmClient = new HelmClient();
     List<HelmChartDescriptor> charts;
+    private final HelmReleaseInjector releaseInjector = new HelmReleaseInjector();
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
@@ -31,7 +35,7 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
             Class<?> testClass = extensionContext.getRequiredTestClass();
             charts = new HelmAnnotationParser().parseHelmAnnotations(testClass);
             for (HelmChartDescriptor chart : charts) {
-                logger.info("🏗️ Installing Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
+                logger.info("🏗️ Installing Helm chart: {} with release name: {}", chart.chart(), chart.releaseName());
                 helmClient.installChart(chart);
             }
         }
@@ -46,7 +50,7 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
             Class<?> testClass = extensionContext.getRequiredTestClass();
             charts = new HelmAnnotationParser().parseHelmAnnotations(testClass);
             for (HelmChartDescriptor chart : charts) {
-                logger.info("🚨 Uninstalling Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
+                logger.info("🚨 Uninstalling Helm chart: {} with release name: {}", chart.chart(), chart.releaseName());
                 helmClient.uninstallChart(chart);
             }
         }
@@ -58,14 +62,14 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
             logger.info("🪃 Preparing for Helm chart test...");
             List<HelmChartDescriptor> charts = new HelmAnnotationParser().parseHelmAnnotations(extensionContext.getRequiredTestClass());
             for (HelmChartDescriptor chart : charts) {
-                logger.info("📩 Installing Helm chart: " + chart.chart() + " with release name: " + chart.releaseName());
+                logger.info("📩 Installing Helm chart: {} with release name: {}", chart.chart(), chart.releaseName());
                 helmClient.installChart(chart);
             }
         }
         Object testInstance = extensionContext.getRequiredTestInstance();
         if (nonNull(testInstance)) {
             for (HelmChartDescriptor chart : charts) {
-                helmClient.injectHelmServiceHandle(testInstance, chart);
+                releaseInjector.injectInto(testInstance, chart);
             }
         }
 

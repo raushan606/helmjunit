@@ -6,7 +6,9 @@ import com.raushan.helmjunit.core.ServiceResolver;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Uses kubectl commands to resolve service name and port for a Helm release.
@@ -14,7 +16,7 @@ import java.util.logging.Logger;
  */
 public class KubectlServiceResolver implements ServiceResolver {
 
-    private static final Logger logger = Logger.getLogger(KubectlServiceResolver.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(KubectlServiceResolver.class.getName());
 
     @Override
     public Optional<String> resolveServiceName(String releaseName, String namespace) throws Exception {

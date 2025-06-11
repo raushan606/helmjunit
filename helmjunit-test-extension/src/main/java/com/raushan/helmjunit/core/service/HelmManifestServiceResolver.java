@@ -4,16 +4,18 @@ import com.raushan.helmjunit.core.ServiceResolver;
 
 import java.io.InputStream;
 import java.util.Optional;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Parses rendered manifests from Helm to discover service name and port.
  */
 public class HelmManifestServiceResolver implements ServiceResolver {
 
-    private static final Logger logger = Logger.getLogger(HelmManifestServiceResolver.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(HelmManifestServiceResolver.class.getName());
 
     @Override
     public Optional<String> resolveServiceName(String releaseName, String namespace) throws Exception {

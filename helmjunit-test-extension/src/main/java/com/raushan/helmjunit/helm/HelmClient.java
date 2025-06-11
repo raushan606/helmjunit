@@ -10,7 +10,9 @@ import com.raushan.helmjunit.model.HelmRelease;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HelmClient is a utility class that provides methods to interact with Helm,
@@ -19,7 +21,7 @@ import java.util.logging.Logger;
  */
 public class HelmClient {
 
-    Logger logger = Logger.getLogger(HelmClient.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(HelmClient.class.getName());
 
     ServiceResolver resolver = new ChainedServiceResolver(new HelmManifestServiceResolver(), new KubectlServiceResolver());
 
@@ -266,48 +268,11 @@ public class HelmClient {
             logger.info("[" + contextDescription + "] STDOUT:\n" + output);
         }
         if (!error.isBlank()) {
-            logger.warning("[" + contextDescription + "] STDERR:\n" + error);
+            logger.error("[" + contextDescription + "] STDERR:\n" + error);
         }
 
         if (exitCode != 0) {
             throw new RuntimeException("[" + contextDescription + "] failed with exit code " + exitCode);
         }
-    }
-
-    public void injectHelmServiceHandle(Object testInstance, HelmChartDescriptor chartDescriptor) {
-        try {
-            var port = getServicePort(chartDescriptor.releaseName(), chartDescriptor.namespace());
-            Class<?> testClass = testInstance.getClass();
-            for (Field field : testClass.getDeclaredFields()) {
-                if (field.getType().equals(HelmRelease.class)) {
-                    HelmResource annotation = field.getAnnotation(HelmResource.class);
-                    if (annotation != null && annotation.releaseName().equals(chartDescriptor.releaseName())) {
-                        try {
-                            field.setAccessible(true);
-                            String serviceName = annotation.releaseName();
-                            HelmRelease handle = new HelmRelease(
-                                    chartDescriptor.releaseName(),
-                                    chartDescriptor.namespace(),
-                                    serviceName,
-                                    port
-                            );
-                            field.set(testInstance, handle);
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException("Failed to inject HelmRelease", e);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to inject HelmRelease", e);
-        }
-    }
-
-    private int getServicePort(String releaseName, String namespace) throws Exception {
-        Optional<String> serviceNameOpt = resolver.resolveServiceName(releaseName, namespace);
-        if (serviceNameOpt.isEmpty()) {
-            return resolver.resolveServicePort(releaseName, namespace);
-        }
-        return resolver.resolveServicePort(serviceNameOpt.get(), namespace);
     }
 }
