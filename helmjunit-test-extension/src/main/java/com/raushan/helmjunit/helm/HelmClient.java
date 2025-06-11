@@ -1,10 +1,15 @@
 package com.raushan.helmjunit.helm;
 
 import com.raushan.helmjunit.annotation.HelmResource;
+import com.raushan.helmjunit.core.ServiceResolver;
+import com.raushan.helmjunit.core.service.ChainedServiceResolver;
+import com.raushan.helmjunit.core.service.HelmManifestServiceResolver;
+import com.raushan.helmjunit.core.service.KubectlServiceResolver;
 import com.raushan.helmjunit.modal.HelmChartDescriptor;
 import com.raushan.helmjunit.modal.HelmRelease;
 
 import java.lang.reflect.Field;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -15,6 +20,8 @@ import java.util.logging.Logger;
 public class HelmClient {
 
     Logger logger = Logger.getLogger(HelmClient.class.getName());
+
+    ServiceResolver resolver = new ChainedServiceResolver(new HelmManifestServiceResolver(), new KubectlServiceResolver());
 
     /**
      * Installs a Helm chart based on the provided HelmChartDescriptor.
@@ -269,7 +276,7 @@ public class HelmClient {
 
     public void injectHelmServiceHandle(Object testInstance, HelmChartDescriptor chartDescriptor) {
         try {
-            String port = getServicePort(chartDescriptor.releaseName(), chartDescriptor.namespace());
+            var port = getServicePort(chartDescriptor.releaseName(), chartDescriptor.namespace());
             Class<?> testClass = testInstance.getClass();
             for (Field field : testClass.getDeclaredFields()) {
                 if (field.getType().equals(HelmRelease.class)) {
@@ -282,7 +289,7 @@ public class HelmClient {
                                     chartDescriptor.releaseName(),
                                     chartDescriptor.namespace(),
                                     serviceName,
-                                    Integer.parseInt(port)
+                                    port
                             );
                             field.set(testInstance, handle);
                         } catch (IllegalAccessException e) {
@@ -296,16 +303,11 @@ public class HelmClient {
         }
     }
 
-    private String getServicePort(String releaseName, String namespace) throws Exception {
-        ProcessBuilder builder = new ProcessBuilder(
-                "kubectl", "get", "svc", releaseName, "-n", namespace,
-                "-o", "jsonpath={.spec.ports[0].port}"
-        );
-        Process process = builder.start();
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new RuntimeException("Failed to get service port for " + releaseName);
+    private int getServicePort(String releaseName, String namespace) throws Exception {
+        Optional<String> serviceNameOpt = resolver.resolveServiceName(releaseName, namespace);
+        if (serviceNameOpt.isEmpty()) {
+            return resolver.resolveServicePort(releaseName, namespace);
         }
-        return new String(process.getInputStream().readAllBytes());
+        return resolver.resolveServicePort(serviceNameOpt.get(), namespace);
     }
 }
