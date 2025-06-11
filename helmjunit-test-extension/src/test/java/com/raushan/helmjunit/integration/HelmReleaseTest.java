@@ -36,7 +36,7 @@ public class HelmReleaseTest {
         assertNotNull(redis);
         assertEquals("redis", redis.releaseName());
         assertEquals("redis-ns", redis.namespace());
-        assertEquals("redis", redis.serviceName());
+        assertEquals("redis-master", redis.serviceName());
         assertInstanceOf(Integer.class, redis.servicePort());
     }
 }

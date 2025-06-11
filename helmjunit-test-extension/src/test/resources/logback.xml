@@ -1,0 +1,18 @@
+<configuration>
+
+    <!-- Console appender -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%logger{36}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- HelmJUnit logging -->
+    <logger name="com.raushan.helmjunit" level="INFO" />
+
+    <!-- Show INFO by default for everything else -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>

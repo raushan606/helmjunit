@@ -123,7 +123,7 @@ public class HelmClient {
             } catch (Exception e) {
                 attempt++;
                 if (attempt >= maxRetries) {
-                    throw new RuntimeException("𐄂 Helm uninstall failed after " + maxRetries + " attempts", e);
+                    throw new RuntimeException("❌ Helm uninstall failed after " + maxRetries + " attempts", e);
                 }
                 Thread.sleep(2000); // backoff before retry
             }
