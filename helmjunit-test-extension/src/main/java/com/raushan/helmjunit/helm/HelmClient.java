@@ -1,15 +1,6 @@
 package com.raushan.helmjunit.helm;
 
-import com.raushan.helmjunit.annotation.HelmResource;
-import com.raushan.helmjunit.core.ServiceResolver;
-import com.raushan.helmjunit.core.service.ChainedServiceResolver;
-import com.raushan.helmjunit.core.service.HelmManifestServiceResolver;
-import com.raushan.helmjunit.core.service.KubectlServiceResolver;
 import com.raushan.helmjunit.model.HelmChartDescriptor;
-import com.raushan.helmjunit.model.HelmRelease;
-
-import java.lang.reflect.Field;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +14,6 @@ public class HelmClient {
 
     private static final Logger logger = LoggerFactory.getLogger(HelmClient.class.getName());
 
-    ServiceResolver resolver = new ChainedServiceResolver(new HelmManifestServiceResolver(), new KubectlServiceResolver());
-
     /**
      * Installs a Helm chart based on the provided HelmChartDescriptor.
      * It retries the installation up to 3 times in case of failure.
@@ -37,7 +26,7 @@ public class HelmClient {
         int attempt = 0;
         boolean success = false;
 
-        while (attempt < maxRetries && !success) {
+        while (!success) {
             try {
                 ProcessBuilder builder = new ProcessBuilder();
                 builder.command().add("helm");
@@ -55,7 +44,7 @@ public class HelmClient {
                     builder.command().add("--set");
                     builder.command().add(value);
                 }
-                logger.info("Executing Helm install command: " + String.join(" ", builder.command()));
+                logger.info("Executing Helm install command: {}", String.join(" ", builder.command()));
                 runAndLogProcess(builder, "Helm install: " + chartDescriptor.releaseName());
 
                 waitForResourcesReady(chartDescriptor.namespace());
@@ -79,7 +68,7 @@ public class HelmClient {
      * @throws Exception if the pods do not become ready within the timeout
      */
     private void waitForResourcesReady(String namespace) throws Exception {
-        logger.info("☑ Checking pod readiness in namespace: " + namespace);
+        logger.info("Checking pod readiness in namespace: {}", namespace);
         ProcessBuilder builder = new ProcessBuilder(
                 "kubectl", "get", "pods", "-n", namespace, "--no-headers"
         );
@@ -96,7 +85,7 @@ public class HelmClient {
             );
 
             if (allReady) {
-                logger.info("🤩 All pods in namespace '" + namespace + "' are Running.");
+                logger.info("😊 All pods in namespace '{}' are Running.", namespace);
                 return;
             }
 
@@ -119,7 +108,7 @@ public class HelmClient {
         int attempt = 0;
         boolean success = false;
 
-        while (attempt < maxRetries && !success) {
+        while (!success) {
             try {
                 ProcessBuilder builder = new ProcessBuilder(
                         "helm", "uninstall",
@@ -160,7 +149,7 @@ public class HelmClient {
             process.waitFor();
 
             String output = new String(process.getInputStream().readAllBytes()).trim();
-            logger.info("Checking if all pods are deleted in namespace: " + namespace);
+            logger.info("Checking if all pods are deleted in namespace: {}", namespace);
             if (output.isEmpty()) return;
 
             Thread.sleep(2000);
@@ -191,7 +180,7 @@ public class HelmClient {
      * @throws Exception if the namespace does not get deleted within the timeout
      */
     private void waitForNamespaceDeleted(String namespace) throws Exception {
-        logger.info("Waiting for namespace '" + namespace + "' to be deleted...");
+        logger.info("Waiting for namespace '{}' to be deleted...", namespace);
         ProcessBuilder builder = new ProcessBuilder("kubectl", "get", "namespace", namespace);
 
         int maxWaitSeconds = 60;
@@ -205,7 +194,7 @@ public class HelmClient {
             waited += 2;
         }
 
-        logger.warning("Namespace deletion timeout: " + namespace);
+        logger.warn("Namespace deletion timeout: {}", namespace);
         throw new RuntimeException("Namespace deletion timeout: " + namespace);
     }
 
@@ -217,7 +206,7 @@ public class HelmClient {
      * @throws Exception if the pods do not become ready within the timeout
      */
     private void waitForPodsReady(String namespace) throws Exception {
-        logger.info("Waiting for pods in namespace '" + namespace + "' to be Ready...");
+        logger.info("Waiting for pods in namespace '{}' to be Ready...", namespace);
         int maxWaitSeconds = 60;
         int waited = 0;
 
@@ -244,7 +233,7 @@ public class HelmClient {
             );
 
             if (allReady) {
-                logger.info("All pods in namespace [" + namespace + "] are Ready.");
+                logger.info("All pods in namespace [{}] are Ready.", namespace);
                 return;
             }
 
@@ -252,7 +241,7 @@ public class HelmClient {
             waited += 2;
         }
 
-        logger.warning("Timeout waiting for pods to become ready in namespace: " + namespace);
+        logger.warn("Timeout waiting for pods to become ready in namespace: {}", namespace);
         throw new RuntimeException("⏱️ Timeout waiting for pods to be ready in namespace: " + namespace);
     }
 
@@ -265,10 +254,10 @@ public class HelmClient {
         int exitCode = process.waitFor();
 
         if (!output.isBlank()) {
-            logger.info("[" + contextDescription + "] STDOUT:\n" + output);
+            logger.info("[{}] STDOUT:\n{}", contextDescription, output);
         }
         if (!error.isBlank()) {
-            logger.error("[" + contextDescription + "] STDERR:\n" + error);
+            logger.error("[{}] STDERR:\n{}", contextDescription, error);
         }
 
         if (exitCode != 0) {
