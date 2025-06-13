@@ -50,8 +50,28 @@ public @interface HelmResource {
     /**
      * The values to be passed to the Helm chart during deployment.
      * This can be used to override default values in the chart.
+     * e.g.: values = {"key=value"}
      *
      * @return an array of values to be passed to the Helm chart
      */
     String[] values() default {};
+
+    /**
+     * Absolute or relative path to a values file to be used with the Helm chart.
+     * This can be used to specify a file containing values to override
+     * the defaults in the chart.
+     * e.g.: valuesFile = "path/to/values.yaml"
+     *
+     * @return the path to the values file
+     */
+    String valuesFile() default "";
+
+    /**
+     * Whether to load values from the classpath resources.
+     * e.g.: valuesFromClassPath = true
+     * This will be auto-resolve via ClassLoader.
+     *
+     * @return true if values should be loaded from classpath, false otherwise
+     */
+    boolean valuesFromClassPath() default false;
 }
