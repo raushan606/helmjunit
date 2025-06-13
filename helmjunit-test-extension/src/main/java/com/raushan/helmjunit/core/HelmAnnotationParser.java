@@ -34,7 +34,7 @@ public class HelmAnnotationParser {
                         helmResource.chart(),
                         helmResource.releaseName().isEmpty() ? generateDefaultReleaseName(field) : helmResource.releaseName(),
                         helmResource.namespace(),
-                        List.of(helmResource.values()));
+                        List.of(helmResource.values()), helmResource.valuesFile(), helmResource.valuesFromClassPath());
                 helmChartDescriptors.add(descriptor);
             }
         }
