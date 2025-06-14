@@ -78,6 +78,31 @@ public class ConnectionIT {
 }
 ```
 
+## 🔬 DSL Examples
+
+### Single Chart (Redis)
+
+```java
+HelmTestRunner.deploy()
+    .chart("bitnami/redis")
+    .releaseName("redis")
+    .namespace("showcase")
+    .set("architecture=standalone")
+    .set("auth.enabled=false")
+    .run(env -> {
+        // Use env.getServiceName() etc.
+    });
+
+HelmTestRunner.deploy()
+        .add(c -> c.chart("bitnami/redis").releaseName("redis").namespace("showcase"))
+        .add(c -> c.chart("bitnami/postgresql").releaseName("postgres").namespace("showcase"))
+        .run(releases -> {
+            HelmRelease redis = releases.get("redis");
+            HelmRelease postgres = releases.get("postgres");
+            // Use redis.getServiceName(), postgres.getNamespace(), etc.
+    });
+```
+
 ## ✅ Benefits
 
 - 🛠 Zero manual Helm or Kubernetes config

@@ -49,16 +49,16 @@ HelmJUnit is a JUnit 5 extension for running integration tests against applicati
 @HelmChartTest
 public class OrderServiceIT {
 
-  @HelmResource(chart = "bitnami/redis", releaseName = "redis", namespace = "test")
-  HelmRelease redis;
+    @HelmResource(chart = "bitnami/redis", releaseName = "redis", namespace = "test")
+    HelmRelease redis;
 
-  @HelmResource(chart = "bitnami/postgresql", releaseName = "postgres", namespace = "test")
-  HelmRelease postgres;
+    @HelmResource(chart = "bitnami/postgresql", releaseName = "postgres", namespace = "test")
+    HelmRelease postgres;
 
-  @Test
-  void shouldStoreOrderInPostgresAndEmitEventToRedis() {
-    // Use postgres.getNamespace(), redis.getServiceName(), etc.
-  }
+    @Test
+    void shouldStoreOrderInPostgresAndEmitEventToRedis() {
+        // Use postgres.getNamespace(), redis.getServiceName(), etc.
+    }
 }
 ```
 
@@ -76,20 +76,20 @@ public class OrderServiceIT {
 @HelmChartTest
 class HelmChartValidationIT {
 
-  @HelmResource(chart = "../charts/my-app", releaseName = "my-app", namespace = "test")
-  HelmRelease app;
+    @HelmResource(chart = "../charts/my-app", releaseName = "my-app", namespace = "test")
+    HelmRelease app;
 
-  @Test
-  void shouldReachReadyStateAndExposeHttpPort() {
-    try (PortForwardManager pf = new PortForwardManager("svc/" + app.getServiceName(), app.getServicePort(), app.getNamespace())) {
-      String url = pf.getLocalUrl();
-      HttpResponse<String> res = HttpClient.newHttpClient()
-        .send(HttpRequest.newBuilder().uri(URI.create(url + "/health")).build(),
-              HttpResponse.BodyHandlers.ofString());
+    @Test
+    void shouldReachReadyStateAndExposeHttpPort() {
+        try (PortForwardManager pf = new PortForwardManager("svc/" + app.getServiceName(), app.getServicePort(), app.getNamespace())) {
+            String url = pf.getLocalUrl();
+            HttpResponse<String> res = HttpClient.newHttpClient()
+                    .send(HttpRequest.newBuilder().uri(URI.create(url + "/health")).build(),
+                            HttpResponse.BodyHandlers.ofString());
 
-      assertEquals(200, res.statusCode());
+            assertEquals(200, res.statusCode());
+        }
     }
-  }
 }
 ```
 
@@ -106,18 +106,60 @@ class HelmChartValidationIT {
 @HelmChartTest
 public class HelmReleaseTest {
 
-  @HelmResource(chart = "bitnami/nginx", releaseName = "nginx-port", namespace = "nginx-port-ns")
-  HelmRelease nginx;
+    @HelmResource(chart = "bitnami/nginx", releaseName = "nginx-port", namespace = "nginx-port-ns")
+    HelmRelease nginx;
 
-  @Test
-  void testHandleInjectedCorrectly() {
-    assertNotNull(nginx);
-    assertEquals("nginx-port", nginx.getReleaseName());
-    assertEquals("nginx-port-ns", nginx.getNamespace());
-    assertEquals("nginx-port", nginx.getServiceName());
-    assertTrue(nginx.getServicePort() > 0);
-  }
+    @Test
+    void testHandleInjectedCorrectly() {
+        assertNotNull(nginx);
+        assertEquals("nginx-port", nginx.getReleaseName());
+        assertEquals("nginx-port-ns", nginx.getNamespace());
+        assertEquals("nginx-port", nginx.getServiceName());
+        assertTrue(nginx.getServicePort() > 0);
+    }
 }
+```
+
+---
+
+## 💡 Optional DSL-Based Usage (No Annotations)
+
+HelmJUnit supports fluent Java DSL-based testing for maximum flexibility.
+
+### ✅ Single-Chart DSL Example
+
+```java
+HelmTestRunner.deploy()
+    .chart("bitnami/redis")
+    .releaseName("redis-dsl")
+    .namespace("showcase")
+    .set("architecture=standalone")
+    .set("auth.enabled=false")
+    .run(env -> {
+        assertEquals("redis-dsl", env.getReleaseName());
+        assertNotNull(env.getServiceName());
+        assertTrue(env.getServicePort() > 0);
+    });
+```
+
+### ✅ Multi-Chart DSL Example
+
+```java
+HelmTestRunner.deploy()
+    .add(c -> c.chart("bitnami/redis")
+               .releaseName("redis")
+               .namespace("showcase")
+               .set("auth.enabled=false"))
+    .add(c -> c.chart("bitnami/postgresql")
+               .releaseName("postgres")
+               .namespace("showcase")
+               .set("auth.postgresqlPassword=secret"))
+    .run(releases -> {
+        HelmRelease redis = releases.get("redis");
+        HelmRelease postgres = releases.get("postgres");
+        assertNotNull(redis.getServiceName());
+        assertNotNull(postgres.getServiceName());
+    });
 ```
 
 ---
@@ -142,7 +184,7 @@ JUnit 5 Extension
 ### Developer Flow
 
 ```
-Write Test -> Annotate with @HelmResource -> Test runs -> Helm install -> Wait for pods -> Inject handles -> Access service -> Helm uninstall
+Write Test -> Annotate with @HelmResource OR use DSL -> Test runs -> Helm install -> Wait for pods -> Inject handles -> Access service -> Helm uninstall
 ```
 
 ---
@@ -164,16 +206,18 @@ Write Test -> Annotate with @HelmResource -> Test runs -> Helm install -> Wait f
 4. `HelmClient` – Wrapper around Helm install/uninstall and readiness logic.
 5. `PortForwardManager` – Handles temporary port forwarding to access cluster-internal services.
 6. `HelmRelease` – Injected object giving service access metadata to the test.
+7. `HelmTestRunner` – DSL entry point for programmatic test flows.
 
 ---
 
 ## 📓 Developer Notes
 
 * Follow JUnit 5 lifecycle separation: install in `BeforeAll`, inject in `BeforeEach`.
-* Automatically extract service ports using `kubectl get svc`.
+* Automatically extract service ports using `kubectl get svc` or Helm manifest parsing.
 * Inject `HelmRelease` with releaseName, namespace, serviceName, and resolved port.
 * Port forward dynamically selected local ports for service testing.
-* Plan support for YAML value files and `valuesFrom` integration.
+* Support YAML value files and inline key-values.
+* DSL supports both single and multi-chart flows.
 
 ---
 
@@ -216,6 +260,7 @@ Write Test -> Annotate with @HelmResource -> Test runs -> Helm install -> Wait f
 * **Declarative Java DSL**: Create fluent DSL for inline Helm scenarios without annotations.
 * **Documentation Website**: Launch a clean, searchable site with live demos and usage guides.
 * **v1.0.0 Release**: Package stable features, write release notes, and launch publicly.
+
 ---
 
 ## 📣 Feedback & Contributions
