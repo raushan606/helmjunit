@@ -1,5 +1,10 @@
 package com.raushan.helmjunit.dsl;
 
+import com.raushan.helmjunit.model.HelmRelease;
+
+import java.util.Map;
+import java.util.function.Consumer;
+
 /**
  * Builder interface for Helm test configurations.
  * This interface provides methods to set various parameters for Helm tests,
@@ -21,4 +26,8 @@ public interface HelmTestBuilder {
     HelmTestBuilder set(String keyValue);
 
     void run(HelmTestConsumer consumer) throws Exception;
+
+    HelmTestBuilder add(Consumer<HelmTestBuilder> chartConfig);
+
+    void runMulti(Consumer<Map<String, HelmRelease>> testLogic) throws Exception;
 }

@@ -6,7 +6,10 @@ import com.raushan.helmjunit.model.HelmChartDescriptor;
 import com.raushan.helmjunit.model.HelmRelease;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 import static java.util.Objects.isNull;
 
@@ -29,12 +32,15 @@ public class HelmTestRunner {
 
     private static class HelmTestBuilderImpl implements HelmTestBuilder {
 
+        private final List<HelmChartDescriptor> descriptors = new ArrayList<>();
+
         private String chart;
         private String releaseName;
         private String namespace;
         private String valuesFile;
         private boolean valuesFromClasspath;
         private final List<String> values = new ArrayList<>();
+        private boolean isMultiChartMode = false;
 
         /**
          * Sets the Helm chart to be deployed.
@@ -123,6 +129,22 @@ public class HelmTestRunner {
             return this;
         }
 
+        @Override
+        public HelmTestBuilder add(Consumer<HelmTestBuilder> chartConfig) {
+            HelmTestBuilderImpl nested = new HelmTestBuilderImpl();
+            chartConfig.accept(nested);
+            descriptors.add(nested.toDescriptor());
+            this.isMultiChartMode = true;
+            return this;
+        }
+
+        private HelmChartDescriptor toDescriptor() {
+            return new HelmChartDescriptor(
+                    chart, releaseName, namespace,
+                    new ArrayList<>(values), valuesFile, valuesFromClasspath
+            );
+        }
+
         /**
          * Runs the Helm test with the configured parameters.
          * It deploys the Helm chart, executes the provided consumer, and then cleans up by uninstalling the chart.
@@ -132,29 +154,32 @@ public class HelmTestRunner {
          */
         @Override
         public void run(HelmTestConsumer consumer) throws Exception {
-            HelmChartDescriptor descriptor = new HelmChartDescriptor(
-                    chart, releaseName, namespace,
-                    values, valuesFile, valuesFromClasspath
-            );
+            if (isMultiChartMode) {
+                throw new IllegalStateException("Use runMulti(Map<String, HelmRelease> -> ...) for multi-chart tests");
+            }
 
-            HelmClient helmClient = new HelmClient();
-            helmClient.installChart(descriptor);
+            HelmChartDescriptor descriptor = toDescriptor();
+            HelmClient client = new HelmClient();
+            client.installChart(descriptor);
 
             HelmRelease release = new HelmReleaseInjector().createHelmRelease(releaseName, namespace);
-
             HelmTestEnvironment env = new HelmTestEnvironment() {
+                @Override
                 public String getNamespace() {
                     return release.namespace();
                 }
 
+                @Override
                 public String getReleaseName() {
                     return release.releaseName();
                 }
 
+                @Override
                 public String getServiceName() {
                     return release.serviceName();
                 }
 
+                @Override
                 public int getServicePort() {
                     return release.servicePort();
                 }
@@ -163,7 +188,39 @@ public class HelmTestRunner {
             try {
                 consumer.accept(env);
             } finally {
-                helmClient.uninstallChart(descriptor);
+                client.uninstallChart(descriptor);
+            }
+        }
+
+        /**
+         * Runs the Helm test in multi-chart mode.
+         * It deploys multiple Helm charts, executes the provided consumer with a map of releases,
+         * and then cleans up by uninstalling all charts.
+         *
+         * @param consumer a Consumer that processes a map of HelmRelease objects
+         * @throws Exception if an error occurs during deployment or test execution
+         */
+        @Override
+        public void runMulti(Consumer<Map<String, HelmRelease>> consumer) throws Exception {
+            if (!isMultiChartMode) {
+                descriptors.add(toDescriptor());
+            }
+
+            HelmClient client = new HelmClient();
+            HelmReleaseInjector injector = new HelmReleaseInjector();
+            Map<String, HelmRelease> releases = new HashMap<>();
+
+            try {
+                for (HelmChartDescriptor desc : descriptors) {
+                    client.installChart(desc);
+                    releases.put(desc.releaseName(), injector.createHelmRelease(desc.releaseName(), desc.namespace()));
+                    Thread.sleep(2000); // Wait for the chart to be fully deployed
+                }
+                consumer.accept(releases);
+            } finally {
+                for (HelmChartDescriptor desc : descriptors) {
+                    client.uninstallChart(desc);
+                }
             }
         }
     }

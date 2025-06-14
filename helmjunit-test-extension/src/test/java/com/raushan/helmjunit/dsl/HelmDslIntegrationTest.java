@@ -1,22 +1,57 @@
 package com.raushan.helmjunit.dsl;
 
+import com.raushan.helmjunit.model.HelmRelease;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class HelmDslIntegrationTest {
 
     @Test
-    void shouldInstallAndExposeServiceWithDsl() throws Exception {
+    void shouldInstallSingleChartWithDsl() throws Exception {
         HelmTestRunner.deploy()
-                .chart("helmjunit-test-extension")
-                .releaseName("helmjunit-test-extension")
-                .namespace("helmjunit-test-extension")
-                .valuesFile("values.yaml")
-                .set("service.type=NodePort")
-                .run(builder -> {
-                    System.out.println("Namespace: " + builder.getNamespace());
-                    System.out.println("Release Name: " + builder.getReleaseName());
-                    System.out.println("Service Name: " + builder.getServiceName());
-                    System.out.println("Service Port: " + builder.getServicePort());
+                .chart("bitnami/redis")
+                .releaseName("redis-dsl")
+                .namespace("dsl-single")
+                .set("auth.enabled=false")
+                .run(env -> {
+                    assertEquals("redis-dsl", env.getReleaseName());
+                    assertEquals("dsl-single", env.getNamespace());
+                    assertNotNull(env.getServiceName());
+                    assertTrue(env.getServicePort() > 0);
+                    System.out.printf("Redis => %s:%d%n", env.getServiceName(), env.getServicePort());
+                });
+    }
+
+    @Test
+    void shouldInstallMultipleChartsWithDsl() throws Exception {
+        HelmTestRunner.deploy()
+                .add(c -> c.chart("bitnami/redis")
+                        .releaseName("redis-dsl")
+                        .namespace("dsl-multi")
+                        .set("auth.enabled=false"))
+                .add(c -> c.chart("bitnami/postgresql")
+                        .releaseName("postgres-dsl")
+                        .namespace("dsl-multi")
+                        .set("auth.postgresqlPassword=secret"))
+                .runMulti((Map<String, HelmRelease> releases) -> {
+                    assertEquals(2, releases.size());
+
+                    HelmRelease redis = releases.get("redis-dsl");
+                    HelmRelease postgres = releases.get("postgres-dsl");
+
+                    assertNotNull(redis);
+                    assertNotNull(postgres);
+
+                    System.out.printf("Redis => %s:%d%n", redis.releaseName(), redis.servicePort());
+                    System.out.printf("Postgres => %s:%d%n", postgres.serviceName(), postgres.servicePort());
+
+                    assertTrue(redis.servicePort() > 0);
+                    assertTrue(postgres.servicePort() > 0);
                 });
     }
 }
