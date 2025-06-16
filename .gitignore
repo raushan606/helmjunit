@@ -38,5 +38,3 @@ replay_pid*
 .vscode
 /helmjunit-test-extension/build/
 .idea
-/helmjunit-intellij-plugin/build/
-/helmjunit-intellij-plugin/.gradle/
