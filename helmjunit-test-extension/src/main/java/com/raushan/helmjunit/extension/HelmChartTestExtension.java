@@ -21,6 +21,7 @@ import com.raushan.helmjunit.core.HelmAnnotationParser;
 import com.raushan.helmjunit.core.HelmReleaseInjector;
 import com.raushan.helmjunit.helm.HelmClient;
 import com.raushan.helmjunit.model.HelmChartDescriptor;
+import com.raushan.helmjunit.util.MinikubeSupport;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -46,9 +47,15 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
     private final HelmClient helmClient = new HelmClient();
     List<HelmChartDescriptor> charts;
     private final HelmReleaseInjector releaseInjector = new HelmReleaseInjector();
+    private boolean isEnvReady = false;
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        if (isLocalDevelopment(extensionContext)) {
+            logger.info("ℹ️ Local development environment detected. Spinning up Minikube cluster...");
+            MinikubeSupport.ensureEnvironmentReady();
+        }
+        isEnvReady = true;
         if (isPerTestLifecycle(extensionContext)) {
             logger.info("ℹ️ Per-test lifecycle enabled. Helm chart will be installed before each test.");
         } else {
@@ -62,8 +69,16 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
         }
     }
 
+    private boolean isLocalDevelopment(ExtensionContext extensionContext) {
+        return extensionContext.getRequiredTestClass().getAnnotation(HelmChartTest.class).localEnvironment();
+    }
+
     @Override
     public void afterAll(ExtensionContext extensionContext) throws Exception {
+        if (!isEnvReady) {
+            logger.warn("Environment was not prepared before tests. Skipping cleanup.");
+            return;
+        }
         if (isPerTestLifecycle(extensionContext)) {
             logger.info("ℹ️ Per-test lifecycle enabled. Helm chart will be uninstalled after each test.");
         } else {

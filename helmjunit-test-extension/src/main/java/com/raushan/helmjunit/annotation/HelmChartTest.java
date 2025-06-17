@@ -57,4 +57,13 @@ public @interface HelmChartTest {
      * @return true if per-test lifecycle is enabled, false otherwise
      */
     boolean perTestLifecycle() default false;
+
+    /**
+     * Indicates whether the Helm chart test should run in a local environment.
+     * If set to true, the test will use a local Kubernetes cluster using minikube.
+     * If false, it will use a remote Kubernetes cluster.
+     *
+     * @return true if running in a local environment, false otherwise
+     */
+    boolean localEnvironment() default true;
 }
