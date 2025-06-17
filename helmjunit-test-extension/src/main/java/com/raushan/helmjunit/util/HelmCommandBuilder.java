@@ -32,6 +32,13 @@ import java.util.List;
  */
 public class HelmCommandBuilder {
 
+    /**
+     * Builds the Helm install command based on the provided HelmChartDescriptor.
+     *
+     * @param descriptor the Helm chart descriptor containing chart details
+     * @return a list of command-line arguments for the Helm install command
+     * @throws Exception if an error occurs while processing values files
+     */
     public static List<String> buildInstallCommand(HelmChartDescriptor descriptor) throws Exception {
         List<String> cmd = new ArrayList<>();
         cmd.add("helm");
@@ -68,6 +75,12 @@ public class HelmCommandBuilder {
         return cmd;
     }
 
+    /**
+     * Builds the Helm uninstall command based on the provided HelmChartDescriptor.
+     *
+     * @param descriptor the Helm chart descriptor containing release details
+     * @return a list of command-line arguments for the Helm uninstall command
+     */
     public static List<String> buildUninstallCommand(HelmChartDescriptor descriptor) {
         return List.of(
                 "helm", "uninstall",

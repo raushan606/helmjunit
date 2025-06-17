@@ -25,5 +25,12 @@ package com.raushan.helmjunit.dsl;
  */
 @FunctionalInterface
 public interface HelmTestConsumer {
+
+    /**
+     * Accepts a HelmTestEnvironment and performs operations on it.
+     *
+     * @param builder the HelmTestEnvironment to be processed
+     * @throws Exception if any error occurs during processing
+     */
     void accept(HelmTestEnvironment builder) throws Exception;
 }

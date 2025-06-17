@@ -48,5 +48,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @Target(ElementType.TYPE)
 @ExtendWith(HelmChartTestExtension.class)
 public @interface HelmChartTest {
+
+    /**
+     * Indicates whether the Helm chart test should use a per-test lifecycle.
+     * If set to true, the Helm chart will be installed and uninstalled for each test method.
+     * If false, the Helm chart will be installed once before all tests and uninstalled after all tests.
+     *
+     * @return true if per-test lifecycle is enabled, false otherwise
+     */
     boolean perTestLifecycle() default false;
 }

@@ -20,6 +20,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 
+/**
+ * PortForwardManager is a utility class that manages port forwarding for Kubernetes resources.
+ * It uses `kubectl port-forward` to forward a local port to a target resource in a specified namespace.
+ */
 public class PortForwardManager implements AutoCloseable {
     private final Process portForwardProcess;
     private final int localPort;
@@ -63,6 +67,12 @@ public class PortForwardManager implements AutoCloseable {
         }
     }
 
+    /**
+     * Returns the local URL for accessing the forwarded port.
+     *
+     * @param targetPort the target port in the Kubernetes resource
+     * @return the local URL as a string
+     */
     public String getLocalUrl(int targetPort) {
         return "http://localhost:" + localPort;
     }

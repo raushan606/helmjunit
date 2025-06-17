@@ -16,5 +16,11 @@
 
 package com.raushan.helmjunit.model;
 
+/**
+ * Represents a Helm release with its associated details such as release name, namespace,
+ * service name, and service port.
+ * <p>
+ * This record is used to encapsulate the information about a Helm release for testing purposes.
+ */
 public record HelmRelease(String releaseName, String namespace, String serviceName, int servicePort) {
 }

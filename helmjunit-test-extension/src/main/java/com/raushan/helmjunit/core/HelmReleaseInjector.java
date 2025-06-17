@@ -28,6 +28,11 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.util.Optional;
 
+/**
+ * HelmReleaseInjector is responsible for creating and injecting HelmRelease instances
+ * into test classes based on the HelmResource annotations.
+ * It resolves the service name and port using configured service resolvers.
+ */
 public class HelmReleaseInjector {
     private static final Logger logger = LoggerFactory.getLogger(HelmReleaseInjector.class);
 
@@ -56,6 +61,13 @@ public class HelmReleaseInjector {
         }
     }
 
+    /**
+     * Injects HelmRelease instances into the fields of the given test instance
+     * based on the HelmResource annotations present in the class.
+     *
+     * @param testInstance    the test instance where HelmRelease should be injected
+     * @param chartDescriptor the HelmChartDescriptor containing release information
+     */
     public void injectInto(Object testInstance, HelmChartDescriptor chartDescriptor) {
         try {
             Class<?> testClass = testInstance.getClass();

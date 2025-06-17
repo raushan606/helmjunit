@@ -34,6 +34,11 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.nonNull;
 
+/**
+ * JUnit 5 extension for managing Helm chart lifecycle in tests.
+ * This extension installs and uninstalls Helm charts before and after tests,
+ * and injects release information into test instances.
+ */
 public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
 
     Logger logger = LoggerFactory.getLogger(HelmChartTestExtension.class.getName());
@@ -103,6 +108,12 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
         }
     }
 
+    /**
+     * Checks if the Helm chart test is configured to use per-test lifecycle.
+     *
+     * @param extensionContext the JUnit extension context
+     * @return true if per-test lifecycle is enabled, false otherwise
+     */
     private static boolean isPerTestLifecycle(ExtensionContext extensionContext) {
         return extensionContext.getRequiredTestClass().getAnnotation(HelmChartTest.class).perTestLifecycle();
     }

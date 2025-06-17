@@ -46,6 +46,10 @@ public class HelmTestRunner {
     }
 
 
+    /**
+     * Creates a new HelmTestBuilder instance for deploying multiple Helm charts.
+     * This method allows for configuring multiple charts in a single test run.
+     */
     private static class HelmTestBuilderImpl implements HelmTestBuilder {
 
         private final List<HelmChartDescriptor> descriptors = new ArrayList<>();
@@ -154,6 +158,12 @@ public class HelmTestRunner {
             return this;
         }
 
+        /**
+         * Converts the current configuration to a HelmChartDescriptor.
+         * This descriptor contains all the necessary information for deploying the Helm chart.
+         *
+         * @return a HelmChartDescriptor with the current configuration
+         */
         private HelmChartDescriptor toDescriptor() {
             return new HelmChartDescriptor(
                     chart, releaseName, namespace,

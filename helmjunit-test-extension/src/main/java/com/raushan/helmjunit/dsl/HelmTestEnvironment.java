@@ -23,11 +23,31 @@ package com.raushan.helmjunit.dsl;
  */
 public interface HelmTestEnvironment {
 
+    /**
+     * Gets the Kubernetes namespace for the Helm test.
+     *
+     * @return the namespace as a String
+     */
     String getNamespace();
 
+    /**
+     * Gets the release name for the Helm test.
+     *
+     * @return the release name as a String
+     */
     String getReleaseName();
 
+    /**
+     * Gets the service name for the Helm test.
+     *
+     * @return the service name as a String
+     */
     String getServiceName();
 
+    /**
+     * Gets the service port for the Helm test.
+     *
+     * @return the service port as an int
+     */
     int getServicePort();
 }
