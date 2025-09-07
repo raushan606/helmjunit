@@ -108,7 +108,6 @@ public class HelmChartTestExtension implements BeforeAllCallback, AfterAllCallba
                 releaseInjector.injectInto(testInstance, chart);
             }
         }
-
     }
 
     @Override
